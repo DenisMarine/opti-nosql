@@ -14,7 +14,6 @@ async def get_recommendations_service(city: str, k: int) -> List[dict]:
         
         recommendations = []
         async for record in result:
-            print(record)
             recommendations.append({"city": record["city"], "score": record["score"]})
         
         return recommendations

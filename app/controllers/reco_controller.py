@@ -3,6 +3,7 @@ from typing import List
 from pydantic import BaseModel
 from typing import Optional
 from app.services.reco_service import get_recommendations_service
+from starlette.responses import JSONResponse
 
 router = APIRouter()
 
@@ -14,6 +15,6 @@ class Recommendation(BaseModel):
 async def get_recommendations(city: str = Query(..., min_length=3), k: int = Query(..., ge=1)):
     try:
         recommendations = await get_recommendations_service(city, k)
-        return recommendations
+        return JSONResponse(content = {"recommandations" : recommendations}, status_code = 200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
