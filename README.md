@@ -26,6 +26,7 @@ use sth
 db.createCollection("offers")
 db.offers.createIndex({ from: 1, to: 1, price: 1 })
 db.offers.createIndex({ provider: "text" })
+db.load("/chemin/depuis/racine/du/projet/app/databases/populate/mongodb.js")
 ```
 
 #### Neo4j cloud
