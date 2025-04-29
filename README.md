@@ -26,13 +26,23 @@ use sth
 db.createCollection("offers")
 db.offers.createIndex({ from: 1, to: 1, price: 1 })
 db.offers.createIndex({ provider: "text" })
-db.load("/chemin/depuis/racine/du/projet/app/databases/populate/mongodb.js")
+load("/chemin/du/projet/app/databases/populate/mongodb.js")
 ```
 
 #### Neo4j cloud
 
 Pour utiliser neo4j, on va se servir de sa version cloud. Pour simplifier les choses, nous allons utiliser une instance déjà créée. Vous n'avez donc rien à faire. Si vous souhaitez obtenir plus d'informations, voici le site utilisé :
 https://neo4j.com/
+
+On va venir peupler la base qui est vide :
+
+```bash
+# Sous linux/macos
+python3 app/databases/populate/populate_neo4j.py
+
+# Sous windows
+python app/databases/populate/populate_neo4j.py
+```
 
 #### Redis
 
@@ -55,7 +65,6 @@ redis-server
 ### Lancer l'API
 
 Commençons par les bases, vous avez besoin d'avoir python (ou python3) d'installé sur votre machine.
-//DOC INSTALLER PYTHON
 
 Pour commencer, vous aurez besoin de variable d'environnements. Créer un .env comme suit à la racine du repo :
 
@@ -104,5 +113,5 @@ pip install -r requirements.txt
 Pour finir, lançons l'API avec la commande suivante :
 
 ```bash
-uvicorn main:app --reload
+uvicorn app.main:app --reload
 ```
