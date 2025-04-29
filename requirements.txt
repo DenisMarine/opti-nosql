@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+motor
+redis
+neo4j
+python-dotenv
