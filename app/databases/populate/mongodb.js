@@ -1,3 +1,6 @@
+// Cleaning up the database
+db.offers.deleteMany({});
+
 db.offers.insertMany([
   {
     from: "PAR",

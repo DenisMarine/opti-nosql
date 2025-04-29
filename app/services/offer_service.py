@@ -63,3 +63,54 @@ async def get_offers(from_code: str, to_code: str, limit: int = 10):
     if offers:
         store_offers_in_cache(key, offers)
     return offers
+
+async def create_offer(offer: dict):
+    try:
+        # Validate required fields
+        required_fields = ["from", "to", "departDate", "returnDate", "provider", "price", "currency", "legs"]
+        for field in required_fields:
+            if field not in offer:
+                raise ValueError(f"Missing required field: {field}")
+
+        # Validate optional fields
+        optional_fields = ["hotel", "activity"]
+        for field in optional_fields:
+            if field not in offer:
+                offer[field] = None
+
+        # Generate a unique offerId
+        offer["offerId"] = str(ObjectId())
+
+        # Insert the offer into the MongoDB database
+        print("Inserting offer into MongoDB")
+        try:
+            result = await mongodb.offers.insert_one(offer)
+        except Exception as e:
+            print(f"Erreur lors de l'insertion dans MongoDB : {e}")
+            raise
+
+        offer["_id"] = str(result.inserted_id)
+        # Store the offer in Redis cache
+        key = build_cache_key(offer["from"], offer["to"])
+        store_offers_in_cache(key, [offer], ttl=60)
+
+        return {"success": True, "offerId": offer["offerId"]}
+    except Exception as e:
+        print(f"Erreur lors de la création de l'offre : {e}")
+        print(f"Offre : {offer}")
+        raise
+
+
+async def broadcasted_offer(offer: dict):
+    try:
+        # Assuming the offer has a field 'offerId' to broadcast
+        offer_id = offer.get("offerId")
+        if not offer_id:
+            raise ValueError("Offer ID is required for broadcasting.")
+
+        # Broadcast the offer to Redis
+        redis.publish("offers:new", json.dumps(offer))
+        return True
+    except Exception as e:
+        print(f"Erreur lors de la diffusion de l'offre : {e}")
+        raise
