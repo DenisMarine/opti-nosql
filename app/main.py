@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from app.controllers import login_controller, offer_controller, reco_controller
+from app.middlewares.timing_logger import ExecutionTimeLoggerMiddleware
 
 app = FastAPI()
+
+app.add_middleware(ExecutionTimeLoggerMiddleware)
 
 app.include_router(login_controller.router)
 app.include_router(offer_controller.router)
