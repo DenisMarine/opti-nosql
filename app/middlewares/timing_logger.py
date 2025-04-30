@@ -14,3 +14,4 @@ class ExecutionTimeLoggerMiddleware(BaseHTTPMiddleware):
         logger.info(f"{request.method} {request.url.path} - {duration:.4f}s")
 
         return response
+    

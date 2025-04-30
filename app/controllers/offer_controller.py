@@ -9,7 +9,8 @@ router = APIRouter()
 async def offers_endpoint(from_: str = Query(..., alias="from"),
                           to: str = Query(...)):
     try:
-        return await get_offers(from_, to, 10)
+        offers = get_offers(from_, to, 10)
+        return JSONResponse(content = {"offers" : offers}, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
