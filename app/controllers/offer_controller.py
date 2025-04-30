@@ -47,7 +47,6 @@ async def offer_by_id_endpoint(id: str):
         offer = await get_offer_for_id(id)
         if not offer:
             raise HTTPException(status_code=404, detail="Offer not found")
-        print(offer)
         city = offer["from"]
         related = await get_related_offers(city)
         if not related:

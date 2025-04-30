@@ -79,7 +79,6 @@ async def get_offer_from_db(offer_id: str):
         offer = await mongodb.offers.find_one({"_id": ObjectId(offer_id)}, projection)
         if offer:
             offer["_id"] = str(offer["_id"])
-        print(offer)
         return offer
     except Exception as e:
         return None
@@ -150,7 +149,6 @@ async def get_best_offers_for_nearby_cities(nearby_cities):
     for city in top_cities:
         city_code = city["city_code"]
         offer_cursor = mongodb.offers.find({"from": city_code})
-        print(offer_cursor)
         async for offer in offer_cursor:
             offer = serialize(offer)
             if offer["_id"] not in seen_ids:

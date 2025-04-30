@@ -16,7 +16,7 @@ class OffersRouteTimeOut(BaseHTTPMiddleware):
                 response = await asyncio.wait_for(call_next(request), timeout=TIMEOUT)
             except asyncio.TimeoutError:
                 logger.warning(f"/offers request took too long (exceeded {TIMEOUT} seconds).")
-                raise HTTPException(status_code=504, detail="Request took too long to process")
+                raise HTTPException(status_code=408, detail="Request took too long to process")
         else :
             response = await call_next(request)
         return response
