@@ -69,6 +69,7 @@ async def get_offers_from_db(from_code: str, to_code: str, limit: int):
 async def get_offer_from_db(offer_id: str):
     projection = {
         "_id": 1,
+        "from": 1,
         "provider": 1,
         "price": 1,
         "currency": 1,
@@ -78,6 +79,7 @@ async def get_offer_from_db(offer_id: str):
         offer = await mongodb.offers.find_one({"_id": ObjectId(offer_id)}, projection)
         if offer:
             offer["_id"] = str(offer["_id"])
+        print(offer)
         return offer
     except Exception as e:
         return None
@@ -147,7 +149,7 @@ async def get_best_offers_for_nearby_cities(nearby_cities):
     top_cities = nearby_cities[:3]
     for city in top_cities:
         city_code = city["city_code"]
-        offer_cursor = mongodb.offers.find({"legs.dep": city_code})
+        offer_cursor = mongodb.offers.find({"from": city_code})
         print(offer_cursor)
         async for offer in offer_cursor:
             offer = serialize(offer)
@@ -171,18 +173,14 @@ async def create_offer(offer: dict):
             if field not in offer:
                 offer[field] = None
 
-        offer["offerId"] = str(ObjectId())
+        offer["_id"] = str(ObjectId())
 
         try:
             result = await mongodb.offers.insert_one(offer)
         except Exception as e:
             raise HTTPException(status_code = 500, detail = f"Error while inserting into MongoDB : {e}")
 
-        offer["_id"] = str(result.inserted_id)
-        key = build_cache_key(offer["from"], offer["to"])
-        store_offers_in_cache(key, [offer], ttl=60)
-
-        return {"success": True, "offerId": offer["offerId"]}
+        return {"success": True, "offerId": offer["_id"]}
     except Exception as e:
         raise HTTPException(status_code = 500, detail = f"Error while offer creation : {e}")
 
