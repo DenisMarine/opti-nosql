@@ -8,6 +8,10 @@ from app.services.offer_service import broadcasted_offer
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 
+TIMEOUT = 0.7
+# Configure logger
+logger = logging.getLogger("uvicorn")
+
 router = APIRouter()
 
 @router.get("/offers")
@@ -56,8 +60,6 @@ async def create_offer_endpoint(offer_data: dict):
 
         # Return the created offer
         return created_offer
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     

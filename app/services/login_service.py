@@ -1,8 +1,5 @@
 from app.databases.redis import redis
 import uuid
-from fastapi import APIRouter
-
-router = APIRouter()
 
 async def login(user_id: str):
   session_id = str(uuid.uuid4())
