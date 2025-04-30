@@ -29,10 +29,10 @@ async def get_offers_from_cache(key: str, limit: int):
     return None
 
 def get_offer_from_cache(key: str):
-    cached = redis.get(key)  # Pas besoin de `await` si Redis est synchrone.
+    cached = redis.get(key)
     if cached:
         try:
-            return decompress_offer(cached)  # Pas besoin de `.encode()` ici
+            return decompress_offer(cached)
         except Exception as e:
             print(f"Error while decompressing cached offer: {e}")
             return None
@@ -76,7 +76,6 @@ async def get_offer_from_db(offer_id: str):
             offer["_id"] = str(offer["_id"])
         return offer
     except Exception as e:
-        print(f"Error fetching offer by id: {e}")
         return None
 
 def store_offers_in_cache(key: str, offers: list, ttl: int = 60):
@@ -92,7 +91,6 @@ def store_offer_in_cache(key: str, offer: dict, ttl: int = 300):
         compressed = compress_offer(offer)
         redis.setex(key, ttl, compressed)
     except Exception as e:
-        print(f"Erreur lors du stockage de l'offre dans Redis : {e}")
         raise
 
 
@@ -133,23 +131,18 @@ async def get_related_offers(offer_id: str) -> list[str]:
 
 async def create_offer(offer: dict):
     try:
-        # Validate required fields
         required_fields = ["from", "to", "departDate", "returnDate", "provider", "price", "currency", "legs"]
         for field in required_fields:
             if field not in offer:
                 raise ValueError(f"Missing required field: {field}")
 
-        # Validate optional fields
         optional_fields = ["hotel", "activity"]
         for field in optional_fields:
             if field not in offer:
                 offer[field] = None
 
-        # Generate a unique offerId
         offer["offerId"] = str(ObjectId())
 
-        # Insert the offer into the MongoDB database
-        print("Inserting offer into MongoDB")
         try:
             result = await mongodb.offers.insert_one(offer)
         except Exception as e:
@@ -157,25 +150,51 @@ async def create_offer(offer: dict):
             raise
 
         offer["_id"] = str(result.inserted_id)
-        # Store the offer in Redis cache
+        
         key = build_cache_key(offer["from"], offer["to"])
         store_offers_in_cache(key, [offer], ttl=60)
 
         return {"success": True, "offerId": offer["offerId"]}
     except Exception as e:
         print(f"Erreur lors de la création de l'offre : {e}")
-        print(f"Offre : {offer}")
+        raise
+
+async def create_offer(offer: dict):
+    try:
+        required_fields = ["from", "to", "departDate", "returnDate", "provider", "price", "currency", "legs"]
+        for field in required_fields:
+            if field not in offer:
+                raise ValueError(f"Missing required field: {field}")
+
+        optional_fields = ["hotel", "activity"]
+        for field in optional_fields:
+            if field not in offer:
+                offer[field] = None
+
+        offer["offerId"] = str(ObjectId())
+
+        try:
+            result = await mongodb.offers.insert_one(offer)
+        except Exception as e:
+            print(f"Erreur lors de l'insertion dans MongoDB : {e}")
+            raise
+
+        offer["_id"] = str(result.inserted_id)
+        key = build_cache_key(offer["from"], offer["to"])
+        store_offers_in_cache(key, [offer], ttl=60)
+
+        return {"success": True, "offerId": offer["offerId"]}
+    except Exception as e:
+        print(f"Erreur lors de la création de l'offre : {e}")
         raise
 
 
 async def broadcasted_offer(offer: dict):
     try:
-        # Assuming the offer has a field 'offerId' to broadcast
         offer_id = offer.get("offerId")
         if not offer_id:
             raise ValueError("Offer ID is required for broadcasting.")
 
-        # Broadcast the offer to Redis
         redis.publish("offers:new", json.dumps(offer))
         return True
     except Exception as e:
