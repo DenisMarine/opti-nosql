@@ -16,7 +16,7 @@ Le langage Python a été choisi pour développer l’API du projet SupDeVinci T
 
 #### Mongodb
 
-Pour installer mongodb : https://www.mongodb.com/docs/manual/installation/
+Pour installer mongodb : [documentation officielle](https://www.mongodb.com/docs/manual/installation/)
 
 Une fois mongodb installé, on va créer la base de données nécessaire au projet :
 
@@ -115,3 +115,11 @@ Pour finir, lançons l'API avec la commande suivante :
 ```bash
 uvicorn app.main:app --reload
 ```
+
+Veuillez également dans un autre terminal ouvrir un cli redis avec la commande suivante :
+
+```bash
+redis-cli SUBSCRIBE offers:new
+```
+
+Vous pourrez ainsi tester la question 5 : Notification temps réel (canal Redis Pub/Sub)
