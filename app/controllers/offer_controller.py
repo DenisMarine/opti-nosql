@@ -1,11 +1,7 @@
 from fastapi import APIRouter, Query, HTTPException
 from app.services.offer_service import broadcasted_offer, create_offer, get_offers
-import logging
 from app.services.offer_service import get_offer_for_id, get_offers, get_related_offers
-
-TIMEOUT = 0.7
-
-logger = logging.getLogger("uvicorn")
+from starlette.responses import JSONResponse
 
 router = APIRouter()
 
@@ -24,27 +20,22 @@ async def create_offer_endpoint(offer_data: dict):
         for field in required_fields:
             if field not in offer_data:
                 raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
-
         optional_fields = ["hotel", "activity"]
         for field in optional_fields:
             if field not in offer_data:
                 offer_data[field] = None
-
         created_offer = await create_offer(offer_data)
         if not created_offer.get("success"):
             raise HTTPException(status_code=400, detail="Failed to create offer.")
-
         broadcast_message = {
             "offerId": created_offer["offerId"],
             "from": offer_data["from"],
             "to": offer_data["to"]
         }
-        
         broadcasted = await broadcasted_offer(broadcast_message)
         if not broadcasted:
             raise HTTPException(status_code=500, detail="Failed to broadcast offer.")
-
-        return created_offer
+        return JSONResponse(content=created_offer, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
@@ -53,17 +44,12 @@ async def create_offer_endpoint(offer_data: dict):
 async def offer_by_id_endpoint(id: str):
     try:
         offer = await get_offer_for_id(id)
-
         if offer is None:
             raise HTTPException(status_code=404, detail="Offer not found")
-    
         related = await get_related_offers(id)
-
         if not related:
             related = []
-
         offer["relatedOffers"] = related
-        return offer
-
+        return JSONResponse(content=offer, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

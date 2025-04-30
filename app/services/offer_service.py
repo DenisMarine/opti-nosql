@@ -6,6 +6,7 @@ from app.databases.redis import redis
 from app.databases.neo4j import neo4j_driver
 from bson import ObjectId
 from datetime import datetime
+from fastapi import HTTPException
 
 def build_cache_key(from_code: str, to_code: str) -> str:
     return f"offers:{from_code}:{to_code}"
@@ -83,7 +84,7 @@ def store_offers_in_cache(key: str, offers: list, ttl: int = 60):
         compressed = compress_offers(offers)
         redis.setex(key, ttl, compressed)
     except Exception as e:
-        print(f"Erreur lors du stockage dans Redis : {e}")
+        print(f"Error while storing in Redis : {e}")
         raise
 
 def store_offer_in_cache(key: str, offer: dict, ttl: int = 300):
@@ -96,11 +97,9 @@ def store_offer_in_cache(key: str, offer: dict, ttl: int = 300):
 
 async def get_offers(from_code: str, to_code: str, limit: int = 10):
     key = build_cache_key(from_code, to_code)
-
     offers = await get_offers_from_cache(key, limit)
     if offers:
         return offers
-
     offers = await get_offers_from_db(from_code, to_code, limit)
     if offers:
         store_offers_in_cache(key, offers)
@@ -135,30 +134,22 @@ async def create_offer(offer: dict):
         for field in required_fields:
             if field not in offer:
                 raise ValueError(f"Missing required field: {field}")
-
         optional_fields = ["hotel", "activity"]
         for field in optional_fields:
             if field not in offer:
                 offer[field] = None
-
         offer["offerId"] = str(ObjectId())
-
         try:
             result = await mongodb.offers.insert_one(offer)
         except Exception as e:
-            print(f"Erreur lors de l'insertion dans MongoDB : {e}")
-            raise
-
+            raise HTTPException(status_code = 500, detail = f"Error while inserting into MongoDB : {e}")
         offer["_id"] = str(result.inserted_id)
-        
         key = build_cache_key(offer["from"], offer["to"])
         store_offers_in_cache(key, [offer], ttl=60)
-
         return {"success": True, "offerId": offer["offerId"]}
     except Exception as e:
-        print(f"Erreur lors de la création de l'offre : {e}")
-        raise
-
+        raise HTTPException(status_code = 500, detail = f"Error while offer creation : {e}")
+    
 async def create_offer(offer: dict):
     try:
         required_fields = ["from", "to", "departDate", "returnDate", "provider", "price", "currency", "legs"]
@@ -176,8 +167,7 @@ async def create_offer(offer: dict):
         try:
             result = await mongodb.offers.insert_one(offer)
         except Exception as e:
-            print(f"Erreur lors de l'insertion dans MongoDB : {e}")
-            raise
+            raise HTTPException(status_code = 500, detail = f"Error while inserting into MongoDB : {e}")
 
         offer["_id"] = str(result.inserted_id)
         key = build_cache_key(offer["from"], offer["to"])
@@ -185,9 +175,7 @@ async def create_offer(offer: dict):
 
         return {"success": True, "offerId": offer["offerId"]}
     except Exception as e:
-        print(f"Erreur lors de la création de l'offre : {e}")
-        raise
-
+        raise HTTPException(status_code = 500, detail = f"Error while offer creation : {e}")
 
 async def broadcasted_offer(offer: dict):
     try:
@@ -198,5 +186,5 @@ async def broadcasted_offer(offer: dict):
         redis.publish("offers:new", json.dumps(offer))
         return True
     except Exception as e:
-        print(f"Erreur lors de la diffusion de l'offre : {e}")
+        print(f"Error while broadcasting the offer : {e}")
         raise
