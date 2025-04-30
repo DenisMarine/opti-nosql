@@ -12,6 +12,31 @@ Mathieu MORGAT
 
 ## Installation
 
+### Docker
+
+Assurez-vous d'avoir docker et docker-compose d'installé sur votre machine.
+
+Ensuite veuillez créer un fichier `.env` à la racine du projet avec les variables d'environnement suivantes (pas besoin de setup les variables mongodb et redis, elles sont déjà configurées dans le docker-compose) :
+
+```bash
+# Connexion to neo4j cloud
+NEO4J_URI=neo4j+s://94cab353.databases.neo4j.io
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=VANdBiMR24EfcF_BOHZ9N8GIsJ3RArR9KA2IpmccuMQ
+```
+
+Vous pouvez vous inspirer du fichier `.env.example` qui est présent dans le projet.
+
+Pour lancer le projet, il vous suffit de lancer la commande suivante :
+
+```bash
+docker compose up --build
+```
+
+Cela va créer un conteneur avec tous les services nécessaires au bon fonctionnement de l'application (redis/mongo/api).
+
+Vous pouvez ensuite accéder à l'application via l'url suivante : <http://localhost:8000>
+
 ### Les bases de données
 
 #### Mongodb
@@ -23,16 +48,14 @@ Une fois mongodb installé, on va créer la base de données nécessaire au proj
 ```bash
 mongosh
 use sth
-db.createCollection("offers")
-db.offers.createIndex({ from: 1, to: 1, price: 1 })
-db.offers.createIndex({ provider: "text" })
-load("/chemin/du/projet/app/databases/populate/mongodb.js")
+
+load("/chemin/du/projet/app/databases/populate/mongodb-init.js")
 ```
 
 #### Neo4j cloud
 
 Pour utiliser neo4j, on va se servir de sa version cloud. Pour simplifier les choses, nous allons utiliser une instance déjà créée. Vous n'avez donc rien à faire. Si vous souhaitez obtenir plus d'informations, voici le site utilisé :
-https://neo4j.com/
+<https://neo4j.com/>
 
 On va venir peupler la base qui est vide :
 
@@ -84,6 +107,8 @@ NEO4J_USER=neo4j
 NEO4J_PASSWORD=VANdBiMR24EfcF_BOHZ9N8GIsJ3RArR9KA2IpmccuMQ
 ```
 
+Vous pourrez utiliser le fichier `.env.example` comme exemple (les seules valeurs qui importent sont celles du neo4j en local).
+
 Lancez ensuite cette commande, elle permet de n'installer les dépendances que pour ce projet-ci :
 
 ```bash
@@ -116,6 +141,10 @@ Pour finir, lançons l'API avec la commande suivante :
 uvicorn app.main:app --reload
 ```
 
+### Tester l'API
+
+Vous pouvez tester l'API avec le client postman ou via le navigateur.
+
 Veuillez également dans un autre terminal ouvrir un cli redis avec la commande suivante :
 
 ```bash
@@ -123,3 +152,40 @@ redis-cli SUBSCRIBE offers:new
 ```
 
 Vous pourrez ainsi tester la question 5 : Notification temps réel (canal Redis Pub/Sub)
+
+Pour tester cette route POST, vous pouvez utiliser le client postman :
+
+```bash
+# Avec Postman
+(POST) http://127.0.0.1:8000/offers
+```
+
+Vous pourrez anisi utiliser le body suivant lors de votre requête :
+
+```json
+{
+        "from": "PAR",
+        "to": "TYO",
+        "departDate": "2025-05-15T10:00:00Z",
+        "returnDate": "2025-05-25T18:00:00Z",
+        "provider": "AirZen",
+        "price": 750.0,
+        "currency": "EUR",
+        "legs": [
+            {
+                "flightNum": "AZ123",
+                "dep": "PAR",
+                "arr": "TYO",
+                "duration": "12h"
+            },
+            {
+                "flightNum": "AZ124",
+                "dep": "TYO",
+                "arr": "PAR",
+                "duration": "12h"
+            }
+        ],
+        "hotel": null,
+        "activity": null
+    }
+```
