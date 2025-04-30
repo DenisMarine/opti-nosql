@@ -9,7 +9,7 @@ router = APIRouter()
 async def offers_endpoint(from_: str = Query(..., alias="from"),
                           to: str = Query(...)):
     try:
-        offers = get_offers(from_, to, 10)
+        offers = await get_offers(from_, to, 10)
         return JSONResponse(content = {"offers" : offers}, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -45,12 +45,12 @@ async def create_offer_endpoint(offer_data: dict):
 async def offer_by_id_endpoint(id: str):
     try:
         offer = await get_offer_for_id(id)
-        if offer is None:
+        if not offer:
             raise HTTPException(status_code=404, detail="Offer not found")
-        related = await get_related_offers(id)
+        city = offer["legs"][0]["dep"]
+        related = await get_related_offers(city)
         if not related:
             related = []
-        offer["relatedOffers"] = related
-        return JSONResponse(content=offer, status_code=200)
+        return JSONResponse(content={"offer": offer, "relatedOffers": related}, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

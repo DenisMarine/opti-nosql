@@ -1,12 +1,15 @@
-import asyncio
+
 import zlib
 import json
 from app.databases.mongodb import db as mongodb
 from app.databases.redis import redis
-from app.databases.neo4j import neo4j_driver
+from app.databases.neo4j import neo4j_driver as driver
 from bson import ObjectId
 from datetime import datetime
 from fastapi import HTTPException
+import logging
+
+logger = logging.getLogger("uvicorn")
 
 def build_cache_key(from_code: str, to_code: str) -> str:
     return f"offers:{from_code}:{to_code}"
@@ -35,7 +38,7 @@ def get_offer_from_cache(key: str):
         try:
             return decompress_offer(cached)
         except Exception as e:
-            print(f"Error while decompressing cached offer: {e}")
+            logger.error(f"Error while decompressing cached offer: {e}")
             return None
     return None
 
@@ -84,7 +87,7 @@ def store_offers_in_cache(key: str, offers: list, ttl: int = 60):
         compressed = compress_offers(offers)
         redis.setex(key, ttl, compressed)
     except Exception as e:
-        print(f"Error while storing in Redis : {e}")
+        logger.error(f"Error while storing in Redis : {e}")
         raise
 
 def store_offer_in_cache(key: str, offer: dict, ttl: int = 300):
@@ -93,7 +96,6 @@ def store_offer_in_cache(key: str, offer: dict, ttl: int = 300):
         redis.setex(key, ttl, compressed)
     except Exception as e:
         raise
-
 
 async def get_offers(from_code: str, to_code: str, limit: int = 10):
     key = build_cache_key(from_code, to_code)
@@ -111,44 +113,51 @@ async def get_offer_for_id(offer_id: str):
     if not offer:
         offer = await get_offer_from_db(offer_id)
         if offer:
-            await store_offer_in_cache(key, offer)
+            store_offer_in_cache(key, offer)
     return offer
 
-def get_related_offers_sync(offer_id: str) -> list[str]:
+async def get_related_offers(city_code):
+    nearby_cities = await get_nearby_cities(city_code)
+    
+    best_offers = await get_best_offers_for_nearby_cities(nearby_cities)
+    return {
+        "relatedOffers": best_offers
+    }
+    
+async def get_nearby_cities(city_code):
     query = """
-    MATCH (o:Offer {id: $offer_id})-[:DEPARTS_FROM]->(city)<-[:DEPARTS_FROM]-(related:Offer)
-    WHERE related.id <> $offer_id AND related.date = o.date
-    RETURN DISTINCT related.id AS id
-    LIMIT 3
+    MATCH (city:City {code: $city_code})
+    MATCH (city)-[r:NEAR]->(relatedCity:City)
+    RETURN DISTINCT relatedCity.code AS relatedCityCode, r.weight AS weight
+    ORDER BY r.weight DESC
     """
-    with neo4j_driver.session() as session:
-        result = session.run(query, {"offer_id": offer_id})
-        return [record["id"] for record in result]
-
-async def get_related_offers(offer_id: str) -> list[str]:
-    return await asyncio.to_thread(get_related_offers_sync, offer_id)
-
-async def create_offer(offer: dict):
-    try:
-        required_fields = ["from", "to", "departDate", "returnDate", "provider", "price", "currency", "legs"]
-        for field in required_fields:
-            if field not in offer:
-                raise ValueError(f"Missing required field: {field}")
-        optional_fields = ["hotel", "activity"]
-        for field in optional_fields:
-            if field not in offer:
-                offer[field] = None
-        offer["offerId"] = str(ObjectId())
-        try:
-            result = await mongodb.offers.insert_one(offer)
-        except Exception as e:
-            raise HTTPException(status_code = 500, detail = f"Error while inserting into MongoDB : {e}")
-        offer["_id"] = str(result.inserted_id)
-        key = build_cache_key(offer["from"], offer["to"])
-        store_offers_in_cache(key, [offer], ttl=60)
-        return {"success": True, "offerId": offer["offerId"]}
-    except Exception as e:
-        raise HTTPException(status_code = 500, detail = f"Error while offer creation : {e}")
+    async with driver.session() as session:
+        result = await session.run(query, city_code=city_code)
+        nearby_cities = []
+        async for record in result:
+            nearby_cities.append({
+                "city_code": record["relatedCityCode"],
+                "weight": record["weight"]
+            })
+        return nearby_cities
+    
+async def get_best_offers_for_nearby_cities(nearby_cities):
+    offers = []
+    seen_ids = set()
+    top_cities = nearby_cities[:3]
+    for city in top_cities:
+        city_code = city["city_code"]
+        offer_cursor = mongodb.offers.find({"legs.dep": city_code})
+        print(offer_cursor)
+        async for offer in offer_cursor:
+            offer = serialize(offer)
+            if offer["_id"] not in seen_ids:
+                seen_ids.add(offer["_id"])
+                offer["relatedCity"] = city_code
+                offer["weight"] = city["weight"] 
+                offers.append(offer)
+    sorted_offers = sorted(offers, key=lambda x: x["weight"], reverse=True)[:3]
+    return sorted_offers
     
 async def create_offer(offer: dict):
     try:
@@ -186,5 +195,5 @@ async def broadcasted_offer(offer: dict):
         redis.publish("offers:new", json.dumps(offer))
         return True
     except Exception as e:
-        print(f"Error while broadcasting the offer : {e}")
+        logger.error(f"Error while broadcasting the offer : {e}")
         raise
