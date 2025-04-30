@@ -30,8 +30,6 @@ async def create_offer_endpoint(offer_data: dict):
             if field not in offer_data:
                 offer_data[field] = None
 
-        # Create the offer
-        print("Creating offer with create_offer function")
         created_offer = await create_offer(offer_data)
         if not created_offer.get("success"):
             raise HTTPException(status_code=400, detail="Failed to create offer.")
@@ -41,7 +39,7 @@ async def create_offer_endpoint(offer_data: dict):
             "from": offer_data["from"],
             "to": offer_data["to"]
         }
-        print("Broadcasting offer with broadcasted_offer function")
+        
         broadcasted = await broadcasted_offer(broadcast_message)
         if not broadcasted:
             raise HTTPException(status_code=500, detail="Failed to broadcast offer.")
