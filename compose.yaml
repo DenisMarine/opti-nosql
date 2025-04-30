@@ -1,0 +1,52 @@
+#compose.yaml
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongo-db
+    restart: always
+    networks:
+      - app-network
+    environment:
+        MONGO_INITDB_DATABASE: sth
+    ports:
+        - 27017:27017
+    volumes:
+        - ./app/databases/populate/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+  
+  redis:
+    image: redis:latest
+    container_name: redis-db
+    networks:
+      - app-network
+    ports:
+      - 6379:6379
+    command: ["redis-server", "--requirepass", ""]
+  
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: server
+    restart: always
+    networks:
+      - app-network
+    ports:
+      - 8000:8000
+    depends_on:
+      - mongodb
+      - redis
+    env_file:
+      - .env
+    environment:
+      REDIS_HOST: redis-db
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      MONGODB_URI: mongodb://mongo-db:27017
+      MONGODB_DB: sth
+      NEO4J_URI: ${NEO4J_URI}
+      NEO4J_USER: ${NEO4J_USER}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+
+networks:
+  app-network:
+    driver: bridge

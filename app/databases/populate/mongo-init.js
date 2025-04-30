@@ -1,4 +1,6 @@
-// Cleaning up the database
+db.createCollection("offers");
+db.offers.createIndex({ from: 1, to: 1, price: 1 });
+db.offers.createIndex({ provider: "text" });
 db.offers.deleteMany({});
 
 db.offers.insertMany([
