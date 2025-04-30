@@ -2,13 +2,13 @@
 
 ## Étudiants
 
-Souria Ranjinie VINGADASSAMY
-Marine DENIS
-Mathieu MORGAT
+- Souria Ranjinie VINGADASSAMY
+- Marine DENIS
+- Mathieu MORGAT
 
 ## Spécifications
 
-//choix du langage etc
+Le langage Python a été choisi pour développer l’API du projet SupDeVinci Travel Hub en raison de sa clarté, de sa simplicité et de sa large adoption dans le développement web. Il s’intègre facilement avec les bases NoSQL utilisées (MongoDB, Redis et Neo4j) grâce à un large éventail de bibliothèques spécialisées. L’utilisation de FastAPI nous permet par ailleurs de garantir des performances élevées, tout en respectant les contraintes de latence imposées par l’architecture polyglotte.
 
 ## Installation
 

@@ -3,7 +3,7 @@ import logging
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
-logger = logging.getLogger("uvicorn")  # Ou configure un logger dédié
+logger = logging.getLogger("uvicorn")
 
 class ExecutionTimeLoggerMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -14,3 +14,4 @@ class ExecutionTimeLoggerMiddleware(BaseHTTPMiddleware):
         logger.info(f"{request.method} {request.url.path} - {duration:.4f}s")
 
         return response
+    
