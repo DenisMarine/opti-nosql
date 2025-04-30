@@ -1,5 +1,23 @@
 # Mini-projet SupDeVinci Travel Hub : Intégration de bases NoSQL (Redis, MongoDB, Neo4j)
 
+## Table des matières
+
+- [Mini-projet SupDeVinci Travel Hub : Intégration de bases NoSQL (Redis, MongoDB, Neo4j)](#mini-projet-supdevinci-travel-hub--intégration-de-bases-nosql-redis-mongodb-neo4j)
+  - [Table des matières](#table-des-matières)
+  - [Étudiants](#étudiants)
+  - [Spécifications](#spécifications)
+  - [Installation](#installation)
+    - [Docker](#docker)
+    - [Localement](#localement)
+      - [Prérequis](#prérequis)
+      - [Setup environnement .env](#setup-environnement-env)
+      - [Setup environnement Python](#setup-environnement-python)
+      - [Mongodb](#mongodb)
+      - [Redis](#redis)
+      - [Neo4j cloud](#neo4j-cloud)
+      - [Lancer l'API](#lancer-lapi)
+    - [Tester l'API](#tester-lapi)
+
 ## Étudiants
 
 - Souria Ranjinie VINGADASSAMY
@@ -39,6 +57,14 @@ docker compose up --build
 ```
 
 Cela va créer un conteneur avec tous les services nécessaires au bon fonctionnement de l'application (redis/mongo/api).
+
+Si vous devez rebuild, assurez-vous de bien supprimer les volumes de mongodb et redis avant de relancer la commande :
+
+```bash
+docker compose down -v
+```
+
+Cela va supprimer les volumes de mongodb et redis, ainsi que les conteneurs. Vous pourrez ensuite relancer la commande `docker compose up --build` pour relancer l'application et correctemment avoir les données du script mongo-init.js.
 
 Vous pouvez ensuite accéder à l'application via l'url suivante : <http://localhost:8000>
 
@@ -121,7 +147,7 @@ mongosh
 use sth
 
 # - Créer la collection et la peupler avec le script
-load("/chemin/du/projet/app/databases/populate/mongodb-init.js")
+load("/chemin/du/projet/docker-entrypoint-initdb.d/mongo-init.js")
 ```
 
 #### Redis

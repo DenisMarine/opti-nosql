@@ -7,11 +7,11 @@ services:
     networks:
       - app-network
     environment:
-        MONGO_INITDB_DATABASE: sth
+      MONGO_INITDB_DATABASE: sth
     ports:
-        - 27017:27017
+      - 27017:27017
     volumes:
-        - ./app/databases/populate/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./docker-entrypoint-initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
   
   redis:
     image: redis:latest
