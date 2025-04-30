@@ -1,9 +1,8 @@
-import time
 import logging
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from fastapi import HTTPException
 import asyncio
+from starlette.responses import JSONResponse
 
 logger = logging.getLogger("uvicorn")
 
@@ -16,7 +15,10 @@ class OffersRouteTimeOut(BaseHTTPMiddleware):
                 response = await asyncio.wait_for(call_next(request), timeout=TIMEOUT)
             except asyncio.TimeoutError:
                 logger.warning(f"/offers request took too long (exceeded {TIMEOUT} seconds).")
-                raise HTTPException(status_code=408, detail="Request took too long to process")
+                return JSONResponse(
+                    status_code=408,
+                    content={"detail": "Request took too long to process"},
+                ) 
         else :
             response = await call_next(request)
         return response
