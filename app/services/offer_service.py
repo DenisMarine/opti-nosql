@@ -57,6 +57,7 @@ def serialize(doc):
 async def get_offers_from_db(from_code: str, to_code: str, limit: int):
     projection = {
         "_id": 1,
+        "from": 1,
         "provider": 1,
         "price": 1,
         "currency": 1,
@@ -70,6 +71,7 @@ async def get_offer_from_db(offer_id: str):
     projection = {
         "_id": 1,
         "from": 1,
+        "departDate": 1,
         "provider": 1,
         "price": 1,
         "currency": 1,
@@ -113,14 +115,16 @@ async def get_offer_for_id(offer_id: str):
     offer = get_offer_from_cache(key)
     if not offer:
         offer = await get_offer_from_db(offer_id)
+        offer = serialize(offer)
         if offer:
             store_offer_in_cache(key, offer)
+    
+    offer = serialize(offer)
     return offer
 
-async def get_related_offers(city_code):
-    nearby_cities = await get_nearby_cities(city_code)
-    
-    best_offers = await get_best_offers_for_nearby_cities(nearby_cities)
+async def get_related_offers(city_code, date):
+    nearby_cities = await get_nearby_cities(city_code)    
+    best_offers = await get_best_offers_for_nearby_cities(nearby_cities, date)
     return {
         "relatedOffers": best_offers
     }
@@ -142,13 +146,13 @@ async def get_nearby_cities(city_code):
             })
         return nearby_cities
     
-async def get_best_offers_for_nearby_cities(nearby_cities):
+async def get_best_offers_for_nearby_cities(nearby_cities, date):
     offers = []
     seen_ids = set()
     top_cities = nearby_cities[:3]
     for city in top_cities:
         city_code = city["city_code"]
-        offer_cursor = mongodb.offers.find({"from": city_code})
+        offer_cursor = mongodb.offers.find({"from": city_code, "departDate": date})
         async for offer in offer_cursor:
             offer = serialize(offer)
             if offer["_id"] not in seen_ids:

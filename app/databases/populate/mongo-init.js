@@ -7,8 +7,8 @@ db.offers.insertMany([
   {
     from: "PAR",
     to: "TYO",
-    departDate: ISODate("2025-05-10T10:00:00Z"),
-    returnDate: ISODate("2025-05-20T10:00:00Z"),
+    departDate: "2025-05-10T10:00:00Z",
+    returnDate: "2025-05-20T10:00:00Z",
     provider: "AirZen",
     price: 750.0,
     currency: "EUR",
@@ -29,8 +29,8 @@ db.offers.insertMany([
   {
     from: "LON",
     to: "NYC",
-    departDate: ISODate("2025-06-15T15:00:00Z"),
-    returnDate: ISODate("2025-06-25T15:00:00Z"),
+    departDate: "2025-06-15T15:00:00Z",
+    returnDate: "2025-06-25T15:00:00Z",
     provider: "SkyTravel",
     price: 900.0,
     currency: "USD",
