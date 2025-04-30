@@ -26,5 +26,4 @@ EXPOSE 8000
 
 COPY ./app /code/app
 
-
-CMD ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "python3 app/databases/populate/populate_neo4j.py && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"]

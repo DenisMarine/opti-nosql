@@ -12,6 +12,11 @@ Mathieu MORGAT
 
 ## Installation
 
+Il y aura deux méthdeds pour lancer le projet :
+
+- Docker-compose
+- Localement
+
 ### Docker
 
 Assurez-vous d'avoir docker et docker-compose d'installé sur votre machine.
@@ -37,57 +42,19 @@ Cela va créer un conteneur avec tous les services nécessaires au bon fonctionn
 
 Vous pouvez ensuite accéder à l'application via l'url suivante : <http://localhost:8000>
 
-### Les bases de données
+### Localement
 
-#### Mongodb
+#### Prérequis
 
-Pour installer mongodb : [documentation officielle](https://www.mongodb.com/docs/manual/installation/)
+- Python 3.10.12
+- pip
+- MongoDB
+- Redis
+- Neo4j (cloud ou local)
+- Postman (ou un autre client HTTP)
+- Docker (si vous souhaitez utiliser docker pour mongodb et redis)
 
-Une fois mongodb installé, on va créer la base de données nécessaire au projet :
-
-```bash
-mongosh
-use sth
-
-load("/chemin/du/projet/app/databases/populate/mongodb-init.js")
-```
-
-#### Neo4j cloud
-
-Pour utiliser neo4j, on va se servir de sa version cloud. Pour simplifier les choses, nous allons utiliser une instance déjà créée. Vous n'avez donc rien à faire. Si vous souhaitez obtenir plus d'informations, voici le site utilisé :
-<https://neo4j.com/>
-
-On va venir peupler la base qui est vide :
-
-```bash
-# Sous linux/macos
-python3 app/databases/populate/populate_neo4j.py
-
-# Sous windows
-python app/databases/populate/populate_neo4j.py
-```
-
-#### Redis
-
-On va commencer par installer redis puis lancer le serveur :
-
-```bash
-# Sous windows ou si vous souhaitez le faire via docker
-docker run --name redis -p 6379:6379 redis
-
-# Sous linux
-sudo apt install redis
-sudo systemctl start redis
-
-# Sous macos
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew install redis
-redis-server
-```
-
-### Lancer l'API
-
-Commençons par les bases, vous avez besoin d'avoir python (ou python3) d'installé sur votre machine.
+#### Setup environnement .env
 
 Pour commencer, vous aurez besoin de variable d'environnements. Créer un .env comme suit à la racine du repo :
 
@@ -109,7 +76,11 @@ NEO4J_PASSWORD=VANdBiMR24EfcF_BOHZ9N8GIsJ3RArR9KA2IpmccuMQ
 
 Vous pourrez utiliser le fichier `.env.example` comme exemple (les seules valeurs qui importent sont celles du neo4j en local).
 
-Lancez ensuite cette commande, elle permet de n'installer les dépendances que pour ce projet-ci :
+#### Setup environnement Python
+
+Il faut maintenant créer un environnement virtuel pour le projet, afin d'isoler les dépendances du projet des autres projets sur votre machine.
+
+Il faut donc créer un environnement virtuel avec la commande suivante :
 
 ```bash
 # Sous linux/macos
@@ -135,7 +106,60 @@ Installons maintenant les dépendances nécessaires à l'API. Elles sont toutes 
 pip install -r requirements.txt
 ```
 
-Pour finir, lançons l'API avec la commande suivante :
+#### Mongodb
+
+Pour installer mongodb : [documentation officielle](https://www.mongodb.com/docs/manual/installation/)
+
+Une fois mongodb installé, on va créer la base de données nécessaire au projet :
+
+```bash
+mongosh
+
+# Dans le terminal mongosh :
+
+# - Créer la base de données
+use sth
+
+# - Créer la collection et la peupler avec le script
+load("/chemin/du/projet/app/databases/populate/mongodb-init.js")
+```
+
+#### Redis
+
+On va commencer par installer redis puis lancer le serveur :
+
+```bash
+# Sous windows ou si vous souhaitez le faire via docker
+docker run --name redis -p 6379:6379 redis
+
+# Sous linux
+sudo apt install redis
+sudo systemctl start redis
+
+# Sous macos
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install redis
+redis-server
+```
+
+#### Neo4j cloud
+
+Pour utiliser neo4j, on va se servir de sa version cloud. Pour simplifier les choses, nous allons utiliser une instance déjà créée. Vous n'avez donc rien à faire. Si vous souhaitez obtenir plus d'informations, voici le site utilisé :
+<https://neo4j.com/>
+
+On va venir peupler la base qui est vide avec le script suivant (assurez vous d'avoir setup le .env et d'être dans l'environnement virtuel avec les requirements) :
+
+```bash
+# Sous linux/macos
+python3 app/databases/populate/populate_neo4j.py
+
+# Sous windows
+python app/databases/populate/populate_neo4j.py
+```
+
+#### Lancer l'API
+
+Pour lancer l'API, il vous suffit de lancer la commande suivante :
 
 ```bash
 uvicorn app.main:app --reload
