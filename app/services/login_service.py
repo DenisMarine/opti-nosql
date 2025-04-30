@@ -1,4 +1,5 @@
 from app.databases.redis import redis
+from fastapi import HTTPException
 import uuid
 
 async def login(user_id: str):
@@ -8,5 +9,4 @@ async def login(user_id: str):
     redis.set(key, user_id, ex=900)
     return {"token": session_id, "expires_in": 900}
   except Exception as e:
-    print(f"Erreur lors du stockage dans Redis : {e}")
-    raise
+    raise HTTPException(status_code=500, detail=f"Error while storing in Redis : {e}")
